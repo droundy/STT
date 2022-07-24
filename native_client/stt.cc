@@ -375,6 +375,16 @@ STT_EnableExternalScorerFromBuffer(ModelState* aCtx,
 }
 
 int
+STT_EnableCallbackScorer(ModelState* aCtx,
+                         double (*scorer)(const char *output, void *data),
+                         void *data)
+{
+  aCtx->callback_scorer_ = scorer;
+  aCtx->callback_data_ = data;
+  return STT_ERR_OK;
+}
+
+int
 STT_AddHotWord(ModelState* aCtx,
               const char* word,
               float boost)
@@ -470,6 +480,8 @@ STT_CreateStream(ModelState* aCtx,
                            cutoff_prob,
                            cutoff_top_n,
                            aCtx->scorer_,
+                           aCtx->callback_scorer_,
+                           aCtx->callback_data_,
                            aCtx->hot_words_);
 
   *retval = ctx.release();

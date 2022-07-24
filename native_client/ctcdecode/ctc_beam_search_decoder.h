@@ -23,6 +23,10 @@ struct DecoderState
 
   Alphabet alphabet_;
   std::shared_ptr<Scorer> ext_scorer_;
+
+  double (*callback_scorer_)(const char *output, void *data);
+  void *callback_data_;
+  
   std::vector<PathTrie*> prefixes_;
   std::unique_ptr<PathTrie> prefix_root_;
   TimestepTreeNode timestep_tree_root_{nullptr, 0};
@@ -55,6 +59,8 @@ struct DecoderState
            double cutoff_prob,
            size_t cutoff_top_n,
            std::shared_ptr<Scorer> ext_scorer,
+                             double (*scorer)(const char *output, void *data),
+                             void *data,
            std::unordered_map<std::string, float> hot_words);
 
   void init_token_mapping();

@@ -197,6 +197,20 @@ int STT_EnableExternalScorerFromBuffer(ModelState* aCtx,
                                        unsigned int aBufferSize);
 
 /**
+ * @brief Enable decoding using an external scorer.
+ *
+ * @param aCtx The ModelState pointer for the model being changed.
+ * @param scorer The function to score an utterance.  Return value is the log of probability.
+ * @param data A pointer that will be passed to the scorder.
+ *
+ * @return Zero on success, non-zero on failure (invalid arguments).
+ */
+STT_EXPORT
+int STT_EnableCallbackScorer(ModelState* aCtx,
+                             double (*scorer)(const char *output, void *data),
+                             void *data);
+
+/**
  * @brief Add a hot-word and its boost.
  *
  * Words that don't occur in the scorer (e.g. proper nouns) or strings that contain spaces won't be taken into account.

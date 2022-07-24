@@ -16,6 +16,7 @@ ModelState::ModelState()
   , audio_win_len_(-1)
   , audio_win_step_(-1)
   , state_size_(-1)
+  , callback_scorer_(0)
 {
 }
 

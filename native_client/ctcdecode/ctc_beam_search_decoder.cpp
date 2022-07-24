@@ -25,6 +25,8 @@ DecoderState::init(const Alphabet& alphabet,
                    double cutoff_prob,
                    size_t cutoff_top_n,
                    std::shared_ptr<Scorer> ext_scorer,
+                             double (*scorer)(const char *output, void *data),
+                             void *data,
                    std::unordered_map<std::string, float> hot_words)
 {
   // assign special ids
@@ -37,6 +39,8 @@ DecoderState::init(const Alphabet& alphabet,
   cutoff_prob_ = cutoff_prob;
   cutoff_top_n_ = cutoff_top_n;
   ext_scorer_ = ext_scorer;
+  callback_scorer_ = scorer;
+  callback_data_ = data;
   hot_words_ = hot_words;
   start_expanding_ = false;
 
@@ -99,7 +103,7 @@ CTCDecoderForWav2vec2AM::init(const Alphabet& alphabet,
                               std::shared_ptr<Scorer> ext_scorer,
                               std::unordered_map<std::string, float> hot_words)
 {
-  int err = this->DecoderState::init(alphabet, beam_size, cutoff_prob, cutoff_top_n, ext_scorer, hot_words);
+  int err = this->DecoderState::init(alphabet, beam_size, cutoff_prob, cutoff_top_n, ext_scorer, 0, 0, hot_words);
   if (err) {
     return err;
   }
@@ -206,7 +210,12 @@ DecoderState::next(const double *probs,
             log_p = log_prob_c + prefix->score;
           }
 
-          if (ext_scorer_) {
+          if (callback_scorer_) {
+            std::vector<unsigned int> output;
+            prefix_new->get_path_vec(output);
+            std::string s = alphabet_.Decode(output);
+            log_p += callback_scorer_(s.c_str(), callback_data_);
+          } else if (ext_scorer_) {
             // skip scoring the space in word based LMs
             PathTrie* prefix_to_score;
             if (ext_scorer_->is_utf8_mode()) {
@@ -580,7 +589,7 @@ std::vector<Output> ctc_beam_search_decoder(
 {
   VALID_CHECK_EQ(alphabet.GetSize()+1, class_dim, "Number of output classes in acoustic model does not match number of labels in the alphabet file. Alphabet file must be the same one that was used to train the acoustic model.");
   DecoderState state;
-  state.init(alphabet, beam_size, cutoff_prob, cutoff_top_n, ext_scorer, hot_words);
+  state.init(alphabet, beam_size, cutoff_prob, cutoff_top_n, ext_scorer, 0, 0, hot_words);
   state.next(probs, time_dim, class_dim);
   return state.decode(num_results);
 }
